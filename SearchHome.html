@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>서울 AED 위치 MAP</title>
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f6ac06fb2ee496b0712d97b90841f139"></script>
+  <style>
+    #map {
+      height: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h1>서울 AED 위치 MAP</h1>
+  <div id="map"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    // 카카오맵 SDK 초기화
+    kakao.maps.load(function() {
+      // 지도 생성
+      var container = document.getElementById('map');
+      var options = {
+        center: new kakao.maps.LatLng(37.5665, 126.9780),
+        level: 3
+      };
+      var map = new kakao.maps.Map(container, options);
+
+      // 인포윈도우 객체를 전역 변수로 선언
+      var infowindow = new kakao.maps.InfoWindow({});
+
+      // AED 위치 데이터 가져오기
+      $.getJSON('https://aedbucket11.s3.ap-northeast-2.amazonaws.com/SeoulAEData.json', function(data) {
+        // AED 위치 데이터를 반복하여 지도에 표시
+        $.each(data, function(index, aed) {
+          var marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(aed._Y, aed._X),
+            map: map
+          });
+
+          // 마커 클릭 이벤트 리스너 등록
+          kakao.maps.event.addListener(marker, 'click', function() {
+            // 열려있던 인포윈도우 닫기
+            infowindow.close();
+
+            // 새로운 인포윈도우 열기
+            infowindow.setContent('<div><strong>' + aed.agency + '</strong><br>' + aed.location + '<br>' + aed.addr + '</div>');
+            infowindow.open(map, marker);
+          });
+        });
+      })
+      .fail(function(jqXHR, textStatus, errorThrown) {
+        console.error('AED 위치 데이터를 가져오는 중 오류가 발생했습니다.', errorThrown);
+      });
+    });
+  </script>
+</body>
+</html>
